@@ -71,7 +71,7 @@ public class OrderRepository {
     }
 
     public Integer getOrdersLeftAfterGivenTimeByPartnerId(String time, String partnerId) {
-        int time1 = Integer.parseInt(time.substring(0,2))*60 + Integer.parseInt(time.substring(2));
+        int time1 = Integer.parseInt(time.substring(0,2))*60 + Integer.parseInt(time.substring(3));
 
         List<String> l = orderPartnerDb.get(partnerId);
         int count = 0;
@@ -96,7 +96,7 @@ public class OrderRepository {
 
         int minutes = time%60;
         int hour = (time-minutes)/60;
-        String time1 = "" + hour + minutes;
+        String time1 = "" + hour + ":" + minutes;
 
         return time1;
     }
