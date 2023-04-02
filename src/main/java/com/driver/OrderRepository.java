@@ -11,25 +11,37 @@ public class OrderRepository {
     HashMap<String, DeliveryPartner> deliveryPartnerDb = new HashMap<>();
     HashMap<String, List<String>> orderPartnerDb = new HashMap<>();
 
+    HashSet<String> assignedOrdersDb = new HashSet<>();
+
 
     public void addOrder(Order order) {
         orderDb.put(order.getId(), order);
     }
 
     public void addPartner(String partnerId) {
-        deliveryPartnerDb.put(partnerId, new DeliveryPartner(partnerId));
+        DeliveryPartner deliveryPartner = new DeliveryPartner(partnerId);
+        deliveryPartnerDb.put(partnerId, deliveryPartner);
     }
 
     public void addOrderPartnerPair(String orderId, String partnerId) {
         if(orderPartnerDb.containsKey(partnerId)) {
             List<String> l = orderPartnerDb.get(partnerId);
-            l.add(orderId);
 
-            orderPartnerDb.put(partnerId, l);
+            if(!assignedOrdersDb.contains(orderId)) {
+                l.add(orderId);
+                assignedOrdersDb.add(orderId);
+
+                orderPartnerDb.put(partnerId, l);
+                int orders = deliveryPartnerDb.get(partnerId).getNumberOfOrders() + 1;
+                deliveryPartnerDb.get(partnerId).setNumberOfOrders(orders);
+            }
         }
         else {
             List<String> l = new ArrayList<>();
             l.add(orderId);
+            assignedOrdersDb.add(orderId);
+            int orders = deliveryPartnerDb.get(partnerId).getNumberOfOrders() + 1;
+            deliveryPartnerDb.get(partnerId).setNumberOfOrders(orders);
 
             orderPartnerDb.put(partnerId, l);
         }
@@ -61,12 +73,12 @@ public class OrderRepository {
 
     public Integer getCountOfUnassignedOrders() {
         int count = 0;
-        int assignedOrders = 0;
+        //int assignedOrders = 0;
 
-        for(List<String> l : orderPartnerDb.values()) {
+        /*for(List<String> l : orderPartnerDb.values()) {
             assignedOrders += l.size();
-        }
-        count = orderDb.size()-assignedOrders;
+        }*/
+        count = orderDb.size()-assignedOrdersDb.size();
         return count;
     }
 
@@ -96,18 +108,41 @@ public class OrderRepository {
 
         int minutes = time%60;
         int hour = (time-minutes)/60;
-        String time1 = "" + hour + ":" + minutes;
+        String time1;
+        //Set hour and minutes properly according to military style
+        if (hour < 10) {
+            time1 = "0" + hour + ":";
+        }
+        else {
+            time1 = "" + hour + ":";
+        }
+
+        if (minutes < 10) {
+            time1 += "0" + minutes;
+        }
+        else {
+            time1 += "" + minutes;
+        }
 
         return time1;
     }
 
     public void deletePartnerById(String partnerId) {
+        List<String> orders = orderPartnerDb.get(partnerId);
+
+        for(String id : orders) {
+            assignedOrdersDb.remove(id);
+        }
+
         deliveryPartnerDb.remove(partnerId);
         orderPartnerDb.remove(partnerId);
     }
 
     public void deleteOrderById(String orderId) {
         orderDb.remove(orderId);
+        if(assignedOrdersDb.contains(orderId)) {
+            assignedOrdersDb.remove(orderId);
+        }
 
         for(List<String> l : orderPartnerDb.values()) {
             for(int i=0; i<l.size(); i++) {
